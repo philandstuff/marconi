@@ -7,8 +7,10 @@
 (def redis (node/require "redis"))
 
 (defn redis-channel []
-  (let [ch (async/chan)
-        client (.createClient redis)]
+  (let [ch     (async/chan)
+        client (.createClient redis 6379 "127.0.0.1"
+                              (doto (js-obj)
+                                (aset "no_ready_check" true)))]
     (.on client "error" (fn [err]
                           (.log js/console (str "Error " err))))
     (go
