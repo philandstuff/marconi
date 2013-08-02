@@ -4,6 +4,20 @@
              [cljs.nodejs :as node]))
 
 (def dgram (node/require "dgram"))
+(def redis (node/require "redis"))
+
+(defn redis-channel []
+  (let [ch (async/chan)
+        client (.createClient redis)]
+    (.on client "error" (fn [err]
+                          (.log js/console (str "Error " err))))
+    (go
+     ;; TODO: close connection
+     ;; TODO: react to (.on client "end)
+     (while true
+       (let [msg (<! ch)]
+         (.lpush client "logs" msg))))
+    ch))
 
 (defn statsd-channel []
   (let [statsd-ch (async/chan)
@@ -24,13 +38,15 @@
 
 (defn start [& _]
   (let [stdin-ch  (stdin-channel)
-        statsd-ch (statsd-channel)]
+        statsd-ch (statsd-channel)
+        redis-ch  (redis-channel)]
     (go
      (while true
        (let [chunk (<! stdin-ch)
              buf   (js/Buffer. (+ 4 (dec (.-length chunk))))]
          (.write buf chunk)
          (.write buf ":1|c" (dec (.-length chunk)) 4)
-         (>! statsd-ch buf))))))
+         (>! statsd-ch buf)
+         (>! redis-ch chunk))))))
 
 (set! *main-cli-fn* start)
