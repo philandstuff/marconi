@@ -7,18 +7,26 @@
 (def redis (node/require "redis"))
 
 (defn redis-channel []
-  (let [ch     (async/chan)
-        client (.createClient redis 6379 "127.0.0.1"
-                              (doto (js-obj)
-                                (aset "no_ready_check" true)))]
+  (let [ch       (async/chan)
+        retry-ch (async/chan)
+        client   (.createClient redis 6379 "127.0.0.1"
+                                (doto (js-obj)
+                                  (aset "no_ready_check" true)))]
     (.on client "error" (fn [err]
                           (.log js/console (str "Error " err))))
+    (go (while true
+          (>! retry-ch [0 (<! ch)])))
     (go
      ;; TODO: close connection
      ;; TODO: react to (.on client "end)
      (while true
-       (let [msg (<! ch)]
-         (.lpush client "logs" msg))))
+       (let [[attempt msg] (<! retry-ch)]
+         (if (>= attempt 3)
+           (.log js/console (str "Too many attempts, dropping" msg))
+           (.lpush client "logs" msg (fn [err result]
+                                       (when err
+                                         (.log js/console (str "Error" err ", retrying msg" msg))
+                                         (go (>! retry-ch [(inc attempt) msg])))))))))
     ch))
 
 (defn statsd-channel []
