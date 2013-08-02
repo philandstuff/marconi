@@ -3,6 +3,7 @@
 /classes
 /checkouts
 /node_modules
+/.repl
 pom.xml
 pom.xml.asc
 *.jar
