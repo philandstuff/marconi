@@ -26,7 +26,7 @@
            (.lpush client "logs" msg (fn [err result]
                                        (when err
                                          (.log js/console (str "Error" err ", retrying msg" msg))
-                                         (go (>! retry-ch [(inc attempt) msg])))))))))
+                                         (async/put! retry-ch [(inc attempt) msg]))))))))
     ch))
 
 (defn statsd-channel []
@@ -43,7 +43,7 @@
         stdin-ch (async/chan)]
     (.resume stdin)
     (.setEncoding stdin "utf8")
-    (.on stdin "data" (fn [chunk] (go (>! stdin-ch chunk))))
+    (.on stdin "data" (fn [chunk] (async/put! stdin-ch chunk)))
     stdin-ch))
 
 (defn start [& _]
