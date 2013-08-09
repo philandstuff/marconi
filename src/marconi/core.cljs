@@ -1,10 +1,12 @@
 (ns marconi.core
    (:require-macros [cljs.core.async.macros :refer [go >! <!]])
    (:require [cljs.core.async :as async]
-             [cljs.nodejs :as node]))
+             [cljs.nodejs :as node]
+             [cljs.reader :as reader]))
 
 (def dgram (node/require "dgram"))
 (def redis (node/require "redis"))
+(def fs (node/require "fs"))
 
 (defn redis-channel []
   (let [ch       (async/chan)
@@ -46,14 +48,23 @@
     (.on stdin "data" (fn [chunk] (async/put! stdin-ch chunk)))
     stdin-ch))
 
-(defn start [& _]
+(defn start [config-filename]
   (let [stdin-ch  (stdin-channel)
         statsd-ch (statsd-channel)
         redis-ch  (redis-channel)]
-    (go
-     (while true
-       (let [chunk (<! stdin-ch)
-             buf   (js/Buffer. (+ 4 (dec (.-length chunk))))]
+    (.readFile fs config-filename "utf8"
+                 (fn [error data]
+                   (if error
+                     (.log js/console (str "Error" error))
+                     (let [r (reader/push-back-reader data)]
+                       (loop [d (reader/read r)]
+                         (when d
+                           (prn d)
+                           (recur (reader/read r))))))))
+    #_(go
+       (while true
+         (let [chunk (<! stdin-ch)
+               buf   (js/Buffer. (+ 4 (dec (.-length chunk))))]
          (.write buf chunk)
          (.write buf ":1|c" (dec (.-length chunk)) 4)
          (>! statsd-ch buf)
