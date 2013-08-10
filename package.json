@@ -1,0 +1,17 @@
+{
+  "name": "marconi",
+  "version": "0.0.1",
+  "description": "logstash-format log shipper",
+  "keywords": [
+    "logstash",
+    "redis"
+  ],
+  "author": "Philip Potter <philip.g.potter@gmail.com>",
+  "dependencies": {
+    "redis": ">=0.8.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/philandstuff/marconi.git"
+  }
+}
