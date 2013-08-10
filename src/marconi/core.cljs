@@ -56,10 +56,12 @@
                    (.log js/console (str "Error" error))
                    (let [r (reader/push-back-reader data)]
                      (go
-                      (loop [d (reader/read r)]
-                        (when d
-                          (>! ch d)
-                          (recur (reader/read r)))))))))
+                      (loop []
+                        (if-let [d (reader/read r)]
+                          (do
+                            (>! ch d)
+                            (recur))
+                          (async/close! ch))))))))
     ch))
 
 (defn start [config-filename]
@@ -68,10 +70,11 @@
         redis-ch  (redis-channel)
         config-ch (read-config config-filename)]
     (go
-     (while true
-       (let [piece (<! config-ch)]
+     (loop []
+       (when-let [piece (<! config-ch)]
          (println "foo")
-         (prn piece))))
+         (prn piece)
+         (recur))))
     #_(go
        (while true
          (let [chunk (<! stdin-ch)
