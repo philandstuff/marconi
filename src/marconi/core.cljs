@@ -48,19 +48,30 @@
     (.on stdin "data" (fn [chunk] (async/put! stdin-ch chunk)))
     stdin-ch))
 
+(defn read-config [config-filename]
+  (let [ch (async/chan)]
+    (.readFile fs config-filename "utf8"
+               (fn [error data]
+                 (if error
+                   (.log js/console (str "Error" error))
+                   (let [r (reader/push-back-reader data)]
+                     (go
+                      (loop [d (reader/read r)]
+                        (when d
+                          (>! ch d)
+                          (recur (reader/read r)))))))))
+    ch))
+
 (defn start [config-filename]
   (let [stdin-ch  (stdin-channel)
         statsd-ch (statsd-channel)
-        redis-ch  (redis-channel)]
-    (.readFile fs config-filename "utf8"
-                 (fn [error data]
-                   (if error
-                     (.log js/console (str "Error" error))
-                     (let [r (reader/push-back-reader data)]
-                       (loop [d (reader/read r)]
-                         (when d
-                           (prn d)
-                           (recur (reader/read r))))))))
+        redis-ch  (redis-channel)
+        config-ch (read-config config-filename)]
+    (go
+     (while true
+       (let [piece (<! config-ch)]
+         (println "foo")
+         (prn piece))))
     #_(go
        (while true
          (let [chunk (<! stdin-ch)
