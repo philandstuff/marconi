@@ -40,12 +40,22 @@
          (.send socket statsd-packet 0 (.-length statsd-packet) 8125 "127.0.0.1"))))
     statsd-ch))
 
+(defn wrap-json [line]
+  (JSON/stringify (clj->js {"@message" line})))
+
 (defn stdin-channel [spec]
   (let [stdin    (.-stdin js/process)
+        format   (:format spec)
+        format-fns {:json identity, :text wrap-json}
+        format-fn (format format-fns)
         stdin-ch (async/chan)]
     (.resume stdin)
     (.setEncoding stdin "utf8")
-    (.on stdin "data" (fn [chunk] (async/put! stdin-ch chunk)))
+    (.on stdin "data" (fn [chunk]
+                        ;; FIXME assumes each chunk is one line
+                        ;; use carrier from npm to fix this
+                        (let [output (format-fn chunk)]
+                          (async/put! stdin-ch output))))
     stdin-ch))
 
 (defn stdout-channel [spec]
