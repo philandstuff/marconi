@@ -26,7 +26,8 @@
     ch))
 
 (def input-makers {'input/stdin input/stdin})
-(def output-makers {'output/stdout output/stdout})
+(def output-makers {'output/stdout output/stdout
+                    'output/redis  output/redis})
 
 (defn make-input-channel [spec]
   (let [type  (:type spec)

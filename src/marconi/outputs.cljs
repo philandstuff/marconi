@@ -11,12 +11,11 @@
             (.write stdout (JSON/stringify event)))))
     stdout-ch))
 
-;; dumping ground for stuff that doesn't work atm
 (def dgram (node/require "dgram"))
-(def redis (node/require "redis"))
 
-(defn redis-channel []
-  (let [ch       (async/chan)
+(defn redis [spec]
+  (let [redis    (node/require "redis")
+        ch       (async/chan)
         retry-ch (async/chan)
         client   (.createClient redis 6379 "127.0.0.1"
                                 (doto (js-obj)
@@ -24,7 +23,7 @@
     (.on client "error" (fn [err]
                           (.log js/console (str "Error " err))))
     (go (while true
-          (>! retry-ch [0 (<! ch)])))
+          (>! retry-ch [0 (JSON/stringify (<! ch))])))
     (go
      ;; TODO: close connection
      ;; TODO: react to (.on client "end)
@@ -38,6 +37,7 @@
                                          (async/put! retry-ch [(inc attempt) msg]))))))))
     ch))
 
+;; dumping ground for stuff that doesn't work atm
 (defn statsd-channel []
   (let [statsd-ch (async/chan)
         socket    (.createSocket dgram "udp4")]
