@@ -48,14 +48,13 @@
         format   (:format spec)
         format-fns {:json identity, :text wrap-json}
         format-fn (format format-fns)
-        stdin-ch (async/chan)]
+        stdin-ch (async/chan)
+        carrier  (node/require "carrier")]
     (.resume stdin)
     (.setEncoding stdin "utf8")
-    (.on stdin "data" (fn [chunk]
-                        ;; FIXME assumes each chunk is one line
-                        ;; use carrier from npm to fix this
-                        (let [output (format-fn chunk)]
-                          (async/put! stdin-ch output))))
+    (.carry carrier stdin (fn [line]
+                            (let [output (format-fn line)]
+                              (async/put! stdin-ch output))))
     stdin-ch))
 
 (defn stdout-channel [spec]
