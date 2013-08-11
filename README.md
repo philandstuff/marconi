@@ -4,7 +4,14 @@ A Clojure library designed to ... well, that part is up to you.
 
 ## Usage
 
-FIXME
+
+
+## Dependencies
+
+Most dependencies are specific to a particular input or output
+
+ * stdin: carrier
+ * redis: redis
 
 ## License
 
