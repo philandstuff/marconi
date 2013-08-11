@@ -10,6 +10,8 @@
 
 (defn read-config [config-filename]
   (let [ch (async/chan)]
+    ;; readFileSync? not such a bad idea for startup
+    ;; although if you do a hot reload that's not so good
     (.readFile fs config-filename "utf8"
                (fn [error data]
                  (if error
@@ -51,6 +53,8 @@
            outputs (make-output-channels output)]
        (while true
          (let [[val chan] (alts! inputs)]
+           ;; broadcast pub-sub channels?
+           ;; magic with alts! ?
            (doseq [out outputs]
              (>! out val))))))))
 
