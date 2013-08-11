@@ -15,13 +15,12 @@
                  (if error
                    (.log js/console (str "Error" error))
                    (let [r (reader/push-back-reader data)]
-                     (go
-                      (loop [result []]
-                        (if-let [d (reader/read r)]
-                          (recur (conj result d))
-                          (do
-                            (>! ch result)
-                            (async/close! ch)))))))))
+                     (loop [result []]
+                       (if-let [d (reader/read r)]
+                         (recur (conj result d))
+                         (do
+                           (async/put! ch result)
+                           (async/close! ch))))))))
     ch))
 
 (def input-makers {'input/stdin input/stdin})
