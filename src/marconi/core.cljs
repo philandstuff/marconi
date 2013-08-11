@@ -53,7 +53,6 @@
         stdout-ch (async/chan)]
     (go (while true
           (when-let [event (<! stdout-ch)]
-            (println "printing " event)
             (.write stdout event))))
     stdout-ch))
 
