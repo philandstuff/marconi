@@ -40,13 +40,22 @@
          (.send socket statsd-packet 0 (.-length statsd-packet) 8125 "127.0.0.1"))))
     statsd-ch))
 
-(defn stdin-channel []
+(defn stdin-channel [spec]
   (let [stdin    (.-stdin js/process)
         stdin-ch (async/chan)]
     (.resume stdin)
     (.setEncoding stdin "utf8")
     (.on stdin "data" (fn [chunk] (async/put! stdin-ch chunk)))
     stdin-ch))
+
+(defn stdout-channel [spec]
+  (let [stdout    (.-stdout js/process)
+        stdout-ch (async/chan)]
+    (go (while true
+          (when-let [event (<! stdout-ch)]
+            (println "printing " event)
+            (.write stdout event))))
+    stdout-ch))
 
 (defn read-config [config-filename]
   (let [ch (async/chan)]
@@ -56,32 +65,48 @@
                    (.log js/console (str "Error" error))
                    (let [r (reader/push-back-reader data)]
                      (go
-                      (loop []
+                      (loop [result []]
                         (if-let [d (reader/read r)]
+                          (recur (conj result d))
                           (do
-                            (>! ch d)
-                            (recur))
-                          (async/close! ch))))))))
+                            (>! ch result)
+                            (async/close! ch)))))))))
     ch))
 
+(def input-makers {'input/stdin stdin-channel})
+(def output-makers {'output/stdout stdout-channel})
+
+(defn make-input-channel [spec]
+  (let [type  (:type spec)
+        maker (type input-makers)]
+    (maker spec)))
+
+(defn make-input-channels [specs]
+  (map make-input-channel specs))
+
+(defn make-output-channel [spec]
+  (let [type  (:type spec)
+        maker (type output-makers)]
+    (maker spec)))
+
+(defn make-output-channels [specs]
+  (map make-output-channel specs))
+
 (defn start [config-filename]
-  (let [stdin-ch  (stdin-channel)
-        statsd-ch (statsd-channel)
-        redis-ch  (redis-channel)
-        config-ch (read-config config-filename)]
+  (let [stdin-ch   (stdin-channel)
+        statsd-ch  (statsd-channel)
+        config-ch  (read-config config-filename)
+        inputs-ch  (async/chan)
+        outputs-ch (async/chan)]
     (go
-     (loop []
-       (when-let [piece (<! config-ch)]
-         (println "foo")
-         (prn piece)
-         (recur))))
-    #_(go
+     (let [config   (<! config-ch)
+           {:keys [input output]} (group-by (comp keyword namespace :type) config)
+           inputs (make-input-channels input)
+           outputs (make-output-channels output)
+           ]
        (while true
-         (let [chunk (<! stdin-ch)
-               buf   (js/Buffer. (+ 4 (dec (.-length chunk))))]
-         (.write buf chunk)
-         (.write buf ":1|c" (dec (.-length chunk)) 4)
-         (>! statsd-ch buf)
-         (>! redis-ch chunk))))))
+         (let [[val chan] (alts! inputs)]
+           (doseq [out outputs]
+             (>! out val))))))))
 
 (set! *main-cli-fn* start)
