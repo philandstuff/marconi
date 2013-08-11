@@ -1,5 +1,4 @@
 (ns marconi.inputs
-  (:require-macros [cljs.core.async.macros :refer [go >! <!]])
   (:require [cljs.core.async :as async]
             [cljs.nodejs :as node]
             [cljs.reader :as reader]))
