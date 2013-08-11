@@ -15,7 +15,8 @@
   (let [redis    (node/require "redis")
         ch       (async/chan)
         retry-ch (async/chan)
-        client   (.createClient redis 6379 "127.0.0.1"
+        port     (or (:port spec) 6379)
+        client   (.createClient redis port "127.0.0.1"
                                 (doto (js-obj)
                                   (aset "no_ready_check" true)))]
     (.on client "error" (fn [err]
