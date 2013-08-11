@@ -3,7 +3,8 @@
   (:require [cljs.core.async :as async]
             [cljs.nodejs :as node]
             [cljs.reader :as reader]
-            [marconi.inputs :as input]))
+            [marconi.inputs :as input]
+            [marconi.outputs :as output]))
 
 (def dgram (node/require "dgram"))
 (def redis (node/require "redis"))
@@ -41,14 +42,6 @@
          (.send socket statsd-packet 0 (.-length statsd-packet) 8125 "127.0.0.1"))))
     statsd-ch))
 
-(defn stdout-channel [spec]
-  (let [stdout    (.-stdout node/process)
-        stdout-ch (async/chan)]
-    (go (while true
-          (when-let [event (<! stdout-ch)]
-            (.write stdout (JSON/stringify event)))))
-    stdout-ch))
-
 (defn read-config [config-filename]
   (let [ch (async/chan)]
     (.readFile fs config-filename "utf8"
@@ -66,7 +59,7 @@
     ch))
 
 (def input-makers {'input/stdin input/stdin})
-(def output-makers {'output/stdout stdout-channel})
+(def output-makers {'output/stdout output/stdout})
 
 (defn make-input-channel [spec]
   (let [type  (:type spec)
