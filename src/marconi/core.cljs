@@ -93,11 +93,7 @@
   (map make-output-channel specs))
 
 (defn start [config-filename]
-  (let [stdin-ch   (stdin-channel)
-        statsd-ch  (statsd-channel)
-        config-ch  (read-config config-filename)
-        inputs-ch  (async/chan)
-        outputs-ch (async/chan)]
+  (let [config-ch  (read-config config-filename)]
     (go
      (let [config   (<! config-ch)
            {:keys [input output]} (group-by (comp keyword namespace :type) config)
