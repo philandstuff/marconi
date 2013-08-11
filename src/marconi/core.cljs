@@ -44,7 +44,7 @@
   (JSON/stringify (clj->js {"@message" line})))
 
 (defn stdin-channel [spec]
-  (let [stdin    (.-stdin js/process)
+  (let [stdin    (.-stdin node/process)
         format   (:format spec)
         format-fns {:json identity, :text wrap-json}
         format-fn (format format-fns)
@@ -58,7 +58,7 @@
     stdin-ch))
 
 (defn stdout-channel [spec]
-  (let [stdout    (.-stdout js/process)
+  (let [stdout    (.-stdout node/process)
         stdout-ch (async/chan)]
     (go (while true
           (when-let [event (<! stdout-ch)]
