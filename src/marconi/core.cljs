@@ -1,8 +1,9 @@
 (ns marconi.core
-   (:require-macros [cljs.core.async.macros :refer [go >! <!]])
-   (:require [cljs.core.async :as async]
-             [cljs.nodejs :as node]
-             [cljs.reader :as reader]))
+  (:require-macros [cljs.core.async.macros :refer [go >! <!]])
+  (:require [cljs.core.async :as async]
+            [cljs.nodejs :as node]
+            [cljs.reader :as reader]
+            [marconi.inputs :as input]))
 
 (def dgram (node/require "dgram"))
 (def redis (node/require "redis"))
@@ -40,23 +41,6 @@
          (.send socket statsd-packet 0 (.-length statsd-packet) 8125 "127.0.0.1"))))
     statsd-ch))
 
-(defn wrap-json [line]
-  (clj->js {"@message" line}))
-
-(defn stdin-channel [spec]
-  (let [stdin    (.-stdin node/process)
-        format   (:format spec)
-        format-fns {:json JSON/parse, :text wrap-json}
-        format-fn (format format-fns)
-        stdin-ch (async/chan)
-        carrier  (node/require "carrier")]
-    (.resume stdin)
-    (.setEncoding stdin "utf8")
-    (.carry carrier stdin (fn [line]
-                            (let [output (format-fn line)]
-                              (async/put! stdin-ch output))))
-    stdin-ch))
-
 (defn stdout-channel [spec]
   (let [stdout    (.-stdout node/process)
         stdout-ch (async/chan)]
@@ -81,7 +65,7 @@
                             (async/close! ch)))))))))
     ch))
 
-(def input-makers {'input/stdin stdin-channel})
+(def input-makers {'input/stdin input/stdin})
 (def output-makers {'output/stdout stdout-channel})
 
 (defn make-input-channel [spec]
@@ -105,9 +89,8 @@
     (go
      (let [config   (<! config-ch)
            {:keys [input output]} (group-by (comp keyword namespace :type) config)
-           inputs (make-input-channels input)
-           outputs (make-output-channels output)
-           ]
+           inputs  (make-input-channels input)
+           outputs (make-output-channels output)]
        (while true
          (let [[val chan] (alts! inputs)]
            (doseq [out outputs]
