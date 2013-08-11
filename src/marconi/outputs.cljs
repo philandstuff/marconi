@@ -11,8 +11,6 @@
             (.write stdout (JSON/stringify event)))))
     stdout-ch))
 
-(def dgram (node/require "dgram"))
-
 (defn redis [spec]
   (let [redis    (node/require "redis")
         ch       (async/chan)
@@ -37,12 +35,13 @@
                                          (async/put! retry-ch [(inc attempt) msg]))))))))
     ch))
 
-;; dumping ground for stuff that doesn't work atm
-(defn statsd-channel []
-  (let [statsd-ch (async/chan)
-        socket    (.createSocket dgram "udp4")]
+(defn statsd []
+  (let [dgram  (node/require "dgram")
+        ch     (async/chan)
+        socket (.createSocket dgram "udp4")]
     (go
      (while true
-       (let [statsd-packet (<! statsd-ch)]
-         (.send socket statsd-packet 0 (.-length statsd-packet) 8125 "127.0.0.1"))))
-    statsd-ch))
+       (let [log-event     (<! ch)
+             statsd-packet (str (aget log-event "@message") ":1|c")]
+         (.send socket (js/Buffer. statsd-packet) 0 (.-length statsd-packet) 8125 "127.0.0.1"))))
+    ch))
