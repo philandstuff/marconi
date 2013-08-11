@@ -41,12 +41,12 @@
     statsd-ch))
 
 (defn wrap-json [line]
-  (JSON/stringify (clj->js {"@message" line})))
+  (clj->js {"@message" line}))
 
 (defn stdin-channel [spec]
   (let [stdin    (.-stdin node/process)
         format   (:format spec)
-        format-fns {:json identity, :text wrap-json}
+        format-fns {:json JSON/parse, :text wrap-json}
         format-fn (format format-fns)
         stdin-ch (async/chan)
         carrier  (node/require "carrier")]
@@ -62,7 +62,7 @@
         stdout-ch (async/chan)]
     (go (while true
           (when-let [event (<! stdout-ch)]
-            (.write stdout event))))
+            (.write stdout (JSON/stringify event)))))
     stdout-ch))
 
 (defn read-config [config-filename]
