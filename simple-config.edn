@@ -1,0 +1,5 @@
+{:type   input/stdin
+ :format :text}
+{:type   output/stdout}
+{:type   output/redis
+ :port   6378}

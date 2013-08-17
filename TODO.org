@@ -1,0 +1,101 @@
+#+TITLE: Marconi wishlist
+
+* MVP
+** DONE make configurable (edn format?)
+** DONE input in text, output in json
+** TODO add-timestamp filter
+Date.now() ?
+** TODO filters in order
+* hammock area
+** configuration
+   - conf.d necessary for conf mgmt friendliness
+   - library vs application?
+     - args for library: extensibility with new code
+     - args for application: operational convenience
+       - packaging/installation
+       - ppa
+     - how do you extend with new inputs/filters/outputs?
+       - javascript?
+         - bigger reach
+       - clojurescript?
+         - can participate in closure optimizations
+         - distribute via leiningen
+         - need a JVM to build your js file
+   - topology
+     - simplest: many inputs/single filter chain/many outputs
+       - pro: easier to configure and think about
+       - con: sometimes you don't want this topology (think about
+         reading many multiline log files -- you want multiline on a
+         per-file basis)
+         - although also think about multiline for syslog -- you
+           probably want a single multiline filter to manage for each
+           syslog program (or pid) individually, couldn't you do the
+           same for files?
+     - arbitrary dag:
+       - pro: truly flexible
+       - con: how the f do you configure it conveniently?
+       - q: how do you manage fanin/fanout at arbitrary nodes?
+   - dropping privileges
+     - important for syslog on port 514?
+     - http://benno.id.au/blog/2011/08/09/safely-dropping-privileges-node-js
+   - competitors and why something different
+     - logstash
+       - jruby + jvm is a lot of overhead
+     - lumberjack
+       - ???
+     - heka
+       - ???
+       - https://blog.mozilla.org/services/2013/04/30/introducing-heka/
+       - extensible with lua (awesome!)
+       - two-tier plugins:
+         - Go
+           - require recompilation for new plugins
+           - require restart for reconfiguring existing plugins
+         - lua
+           - hot-reloadable
+           - "sandboxed"
+   - flow control
+     - how do we control how much stuff gets queued up internally?
+     - core.async unbuffered channels seem to do this but should think
+       harder about it
+* wishlist
+** TODO advanced compilation compatibility
+https://github.com/dcodeIO/node.js-closure-compiler-externs/blob/master/package.json
+https://developers.google.com/closure/compiler/docs/api-tutorial3
+http://lukevanderhart.com/2011/09/30/using-javascript-and-clojurescript.html
+** TODO tests!
+** TODO travis?
+** inputs/outputs/filters
+*** TODO multiline
+*** TODO syslog input
+    - parser: https://github.com/squeeks/glossy
+    - syslog server: https://github.com/cconstantine/syslog-node (dead)
+    - 
+*** TODO more statsd stuff: timers, gauges
+*** TODO make redis stuff configurable
+    - host
+    - retry count
+    - elasticsearch bulk format?
+    - redis key
+    - timeout?
+*** TODO nagios nsca output?
+*** TODO add source_host
+see for example
+https://github.com/alphagov/tagalog/commit/fbc423b2ad2604f8b14250e32b20e3115a1c2d58#L4R123
+*** TODO grok filters
+*** TODO file input
+    - like tail -F
+    - https://github.com/mthenw/frontail
+      - just spawns tail -F
+      - distinguishes different files?
+*** TODO file output
+**** TODO with support for log rotation
+ie it should respond to a signal which causes it to reopen its output
+files, thus avoiding the need for copytruncate
+** TODO clean exiting?
+** TODO improved error handling for config files
+   - currently throws an exception in a fn off the main execution
+     flow within #'read-config
+   - report if a namespace other than "input" "output" or "filter" is
+     seen
+   - impenetrable error if filename simply not given

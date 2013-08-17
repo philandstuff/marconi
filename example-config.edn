@@ -1,0 +1,12 @@
+{:type   input/stdin
+ :format :text}
+{:type   filter/add-timestamp}
+{:type   filter/add-tags
+ :tags   ["foo","bar"]}
+{:type   output/statsd-counter
+ :metric "foo.bar.%{@fields.baz}"}
+{:type   output/redis
+ :server "127.0.0.1"
+ :port   "6379"
+ :key    "logs"
+ :es-bulk-format true}
