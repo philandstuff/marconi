@@ -14,13 +14,13 @@ Date.now() ?
      - args for application: operational convenience
        - packaging/installation
        - ppa
-     - how do you extend with new inputs/filters/outputs?
-       - javascript?
-         - bigger reach
-       - clojurescript?
-         - can participate in closure optimizations
-         - distribute via leiningen
-         - need a JVM to build your js file
+       - how do you extend with new inputs/filters/outputs?
+         - javascript?
+           - bigger reach
+         - clojurescript?
+           - can participate in closure optimizations
+           - distribute via leiningen
+           - need a JVM to build your js file
    - topology
      - simplest: many inputs/single filter chain/many outputs
        - pro: easier to configure and think about
@@ -35,29 +35,33 @@ Date.now() ?
        - pro: truly flexible
        - con: how the f do you configure it conveniently?
        - q: how do you manage fanin/fanout at arbitrary nodes?
-   - dropping privileges
-     - important for syslog on port 514?
-     - http://benno.id.au/blog/2011/08/09/safely-dropping-privileges-node-js
-   - competitors and why something different
-     - logstash
-       - jruby + jvm is a lot of overhead
-     - lumberjack
-       - ???
-     - heka
-       - ???
-       - https://blog.mozilla.org/services/2013/04/30/introducing-heka/
-       - extensible with lua (awesome!)
-       - two-tier plugins:
-         - Go
-           - require recompilation for new plugins
-           - require restart for reconfiguring existing plugins
-         - lua
-           - hot-reloadable
-           - "sandboxed"
-   - flow control
-     - how do we control how much stuff gets queued up internally?
-     - core.async unbuffered channels seem to do this but should think
-       harder about it
+** adding plugins
+   - easy as a library
+   - how to do as an app?
+     - js directory to be loaded?
+** dropping privileges
+   - important for syslog on port 514?
+   - http://benno.id.au/blog/2011/08/09/safely-dropping-privileges-node-js
+** competitors and why something different
+   - logstash
+     - jruby + jvm is a lot of overhead
+   - lumberjack
+     - ???
+   - heka
+     - ???
+     - https://blog.mozilla.org/services/2013/04/30/introducing-heka/
+     - extensible with lua (awesome!)
+     - two-tier plugins:
+       - Go
+         - require recompilation for new plugins
+         - require restart for reconfiguring existing plugins
+       - lua
+         - hot-reloadable
+         - "sandboxed"
+** flow control
+  - how do we control how much stuff gets queued up internally?
+  - core.async unbuffered channels seem to do this but should think
+    harder about it
 * wishlist
 ** TODO advanced compilation compatibility
 https://github.com/dcodeIO/node.js-closure-compiler-externs/blob/master/package.json
