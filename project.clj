@@ -9,7 +9,7 @@
   :plugins [[lein-cljsbuild "0.3.2"]
             [org.bodil/lein-noderepl "0.1.10"]]
   :cljsbuild {:builds
-              [{:source-paths ["src"],
+              [{:source-paths ["src/cljs"],
                 :compiler {:output-to "js/main.js",
                            :target :nodejs,
                            :output-dir "js",
